@@ -50,9 +50,10 @@ class GanttChartBuilder(object):
         latest = earliest
         for duration_group in self.duration_groups:
             for duration in duration_group:
-                if duration.startdate < earliest:
+                if duration.startdate is not None and \
+                       duration.startdate < earliest:
                     earliest = duration.startdate
-                if duration.enddate > latest:
+                if duration.enddate is not None and duration.enddate > latest:
                     latest = duration.enddate
 
         while calendar.weekday(earliest.year, earliest.month,
@@ -114,7 +115,13 @@ class GanttChartBuilder(object):
                 div.appendChild(durdiv)
                 durdiv.setAttribute('class', 'duration')
 
-                days = total_days(earliest, duration.startdate)
+                start = duration.startdate
+                if start is None:
+                    start = earliest
+                end = duration.enddate
+                if end is None:
+                    end = latest
+                days = total_days(earliest, start)
                 pixels = int(days * day_size)
                 if days > 0:
                     leading = doc.createElement('div')
@@ -127,12 +134,15 @@ class GanttChartBuilder(object):
                 bar = doc.createElement('div')
                 durdiv.appendChild(bar)
                 bar.appendChild(doc.createTextNode(duration.name))
-                bar.setAttribute('class', 'bar')
-                days = total_days(duration.startdate, duration.enddate)
+                c = 'bar'
+                if duration.enddate is None or duration.startdate is None:
+                    c += ' invalid-date'
+                bar.setAttribute('class', c)
+                days = total_days(start, end)
                 pixels = int(days * day_size)
                 bar.setAttribute('style', 'float: left; width: %ipx' % pixels)
 
-                days = total_days(latest, duration.enddate)
+                days = total_days(latest, end)
                 pixels = int(days * day_size)
                 if days > 0:
                     following = doc.createElement('div')
