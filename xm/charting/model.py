@@ -23,3 +23,4 @@ class Duration(object):
         self.name = name
         self.startdate = start
         self.enddate = end
+        self.work_hours = {}

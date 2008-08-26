@@ -19,19 +19,20 @@ def total_days(d1, d2):
     return d.days
 
 
-class GanttChartBuilder(object):
+class HTMLGanttRenderer(object):
 
     now_factory = staticmethod(date.today)
     max_width = 700
 
-    def __init__(self):
-        self.duration_groups = []
+    def __init__(self, duration_groups):
+        self.duration_groups = duration_groups
 
-    def generate(self):
+    def render(self):
         impl = minidom.getDOMImplementation()
-        doc = impl.createDocument(None, "top", None)
+        self.doc = doc = impl.createDocument(None, "top", None)
+        duration_groups = self.duration_groups
 
-        table = doc.createElement('table')
+        self.table = table = doc.createElement('table')
         table.setAttribute('class', 'gantt-chart')
         table.setAttribute('cellspacing', '0')
         table.setAttribute('cellpadding', '0')
@@ -56,7 +57,7 @@ class GanttChartBuilder(object):
         # need to figure out some scaling by seeing how many items
         # and earliest/latest dates
         latest = earliest
-        for duration_group in self.duration_groups:
+        for duration_group in duration_groups:
             for duration in duration_group:
                 if duration.startdate is not None and \
                        duration.startdate < earliest:
@@ -80,14 +81,19 @@ class GanttChartBuilder(object):
         if latest > (currentstartweek + THREEMONTHS):
             latest = currentstartweek + THREEMONTHS
 
+        self.earliest = earliest
+        self.latest = latest
+
         days = total_days(earliest, latest)
         day_size = int(self.max_width / days) # how many pixels is one day?
+        self.day_size = day_size
 
         th = doc.createElement('th')
         tr.appendChild(th)
         div = doc.createElement('div')
         th.appendChild(div)
-        div.setAttribute('style', 'height: 2em; position: relative; width: %ipx' % self.max_width)
+        div.setAttribute('style', 'height: 2em; position: relative; ' + \
+                                  'width: %ipx' % self.max_width)
         div.setAttribute('class', 'timeline')
 
         somedate = earliest
@@ -101,15 +107,29 @@ class GanttChartBuilder(object):
             if totalwidth + w > self.max_width:
                 w = self.max_width - totalwidth
             weekdiv.setAttribute('style',
-                                 'overflow: hidden; height: 2em; position: absolute; bottom: 0; left: %ipx; width: %ipx' % (totalwidth, (w-5)))
+                                 'overflow: hidden; height: 2em; ' + \
+                                 'position: absolute; bottom: 0; ' + \
+                                 'left: %ipx; width: %ipx'
+                                 % (totalwidth, (w-5)))
             weekdiv.appendChild(doc.createTextNode(str(somedate)))
             somedate += ONEWEEK
             totalwidth += w
 
-        tbody = self.tbody = doc.createElement('tbody')
+        self.tbody = tbody = self.tbody = doc.createElement('tbody')
         table.appendChild(tbody)
 
+        self._generate_duration_rows()
+
+        return table.toprettyxml('  ')
+
+    def _generate_duration_rows(self):
         tr = None
+        tbody = self.tbody
+        doc = self.doc
+        earliest = self.earliest
+        latest = self.latest
+        day_size = self.day_size
+
         for duration_group in self.duration_groups:
             tr = doc.createElement('tr')
             tbody.appendChild(tr)
@@ -179,13 +199,23 @@ class GanttChartBuilder(object):
         if tr is not None:
             tr.setAttribute('class', 'last')
 
-        return table.toprettyxml('  ')
+
+class GanttChartBuilder(object):
+
+    renderers = {'html': HTMLGanttRenderer}
+
+    def __init__(self):
+        self.duration_groups = []
+
+    def generate(self, render_type):
+        builder = self.renderers[render_type](self.duration_groups)
+        return builder.render()
 
     def add_duration_group(self, d):
         self.duration_groups.append(d)
 
 
-def generate_chart(duration_groups):
+def generate_chart(duration_groups, render_type='html'):
     """Generate the HTML for a gantt chart."""
 
     builder = GanttChartBuilder()
@@ -193,4 +223,4 @@ def generate_chart(duration_groups):
     for duration_group in duration_groups:
         builder.add_duration_group(duration_group)
 
-    return builder.generate()
+    return builder.generate(render_type)

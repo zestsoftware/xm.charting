@@ -16,3 +16,4 @@ class IDuration(interface.Interface):
     name = schema.TextLine(title=u'Name')
     startdate = schema.Date(title=u'Start Date')
     enddate = schema.Date(title=u'End Date')
+    work_hours = schema.Dict(title=u'Dictionary of items with hours')
