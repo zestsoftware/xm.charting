@@ -5,6 +5,9 @@ from datetime import timedelta
 
 ONEWEEK = timedelta(days=7)
 ONEDAY = timedelta(days=1)
+ONEMONTH = timedelta(days=28)
+TWOMONTHS = timedelta(days=ONEMONTH.days*2)
+THREEMONTHS = timedelta(days=ONEMONTH.days*3)
 
 
 def total_days(d1, d2):
@@ -43,10 +46,15 @@ class GanttChartBuilder(object):
         tr.appendChild(th)
         th.appendChild(doc.createTextNode(' '))
 
+        earliest = self.now_factory()
+        currentstartweek = earliest
+        # find the monday of "this" week
+        while calendar.weekday(currentstartweek.year, currentstartweek.month,
+                               currentstartweek.day) != 0:
+            currentstartweek -= ONEDAY
+
         # need to figure out some scaling by seeing how many items
         # and earliest/latest dates
-
-        earliest = self.now_factory()
         latest = earliest
         for duration_group in self.duration_groups:
             for duration in duration_group:
@@ -56,11 +64,21 @@ class GanttChartBuilder(object):
                 if duration.enddate is not None and duration.enddate > latest:
                     latest = duration.enddate
 
+        # make sure the first day is the first monday before (or on) the
+        # earliest date
         while calendar.weekday(earliest.year, earliest.month,
                                earliest.day) != 0:
             earliest -= ONEDAY
+        # make sure the last day is the last sunday after (or on) the latest
+        # date
         while calendar.weekday(latest.year, latest.month, latest.day) != 6:
             latest += ONEDAY
+
+        if earliest < (currentstartweek - ONEMONTH):
+            earliest = currentstartweek - ONEMONTH
+
+        if latest > (currentstartweek + THREEMONTHS):
+            latest = currentstartweek + THREEMONTHS
 
         days = total_days(earliest, latest)
         day_size = int(self.max_width / days) # how many pixels is one day?
@@ -116,11 +134,12 @@ class GanttChartBuilder(object):
                 durdiv.setAttribute('class', 'duration')
 
                 start = duration.startdate
-                if start is None:
+                if start is None or start < earliest:
                     start = earliest
                 end = duration.enddate
-                if end is None:
+                if end is None or end > latest:
                     end = latest
+
                 days = total_days(earliest, start)
                 pixels = int(days * day_size)
                 if days > 0:
