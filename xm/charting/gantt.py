@@ -68,7 +68,7 @@ class GanttChartBuilder(object):
         tr.appendChild(th)
         div = doc.createElement('div')
         th.appendChild(div)
-        div.setAttribute('style', 'width: %ipx' % self.max_width)
+        div.setAttribute('style', 'height: 2em; position: relative; width: %ipx' % self.max_width)
         div.setAttribute('class', 'timeline')
 
         somedate = earliest
@@ -82,7 +82,7 @@ class GanttChartBuilder(object):
             if totalwidth + w > self.max_width:
                 w = self.max_width - totalwidth
             weekdiv.setAttribute('style',
-                                 'overflow: hidden; float: left; width: %ipx' % w)
+                                 'overflow: hidden; height: 2em; position: absolute; bottom: 0; left: %ipx; width: %ipx' % (totalwidth, (w-5)))
             weekdiv.appendChild(doc.createTextNode(str(somedate)))
             somedate += ONEWEEK
             totalwidth += w
