@@ -119,8 +119,58 @@ class HTMLGanttRenderer(object):
         table.appendChild(tbody)
 
         self._generate_duration_rows()
+        self._generate_hours_rows()
 
         return table.toprettyxml('  ')
+
+    def _generate_hours_rows(self):
+        tbody = self.tbody
+        doc = self.doc
+
+        memberids = set()
+        for dg in self.duration_groups:
+            for d in dg:
+                memberids.update(d.work_hours.keys())
+
+        tr = None
+        for memberid in sorted(memberids):
+            tr = doc.createElement('tr')
+            tbody.appendChild(tr)
+            tr.setAttribute('class', 'member')
+
+            td = doc.createElement('td')
+            td.setAttribute('class', 'left-col')
+            tr.appendChild(td)
+            td.appendChild(doc.createTextNode(memberid))
+
+            td = doc.createElement('td')
+            tr.appendChild(td)
+
+            div = doc.createElement('div')
+            td.appendChild(div)
+            div.setAttribute('style', 'height: 2em; width: %ipx; position: relative' % self.max_width)
+
+            somedate = self.earliest
+            weekwidth = self.day_size * 7
+            totalwidth = 0
+            while somedate < self.latest:
+                weekdiv = doc.createElement('div')
+                div.appendChild(weekdiv)
+                weekdiv.setAttribute('class', 'week')
+                w = weekwidth
+                if totalwidth + w > self.max_width:
+                    w = self.max_width - totalwidth
+                weekdiv.setAttribute('style',
+                                     'overflow: hidden; height: 2em; ' + \
+                                     'position: absolute; ' + \
+                                     'left: %ipx; width: %ipx'
+                                     % (totalwidth, (w-5)))
+                weekdiv.appendChild(doc.createTextNode('0.0'))
+                somedate += ONEWEEK
+                totalwidth += w
+
+        if tr is not None:
+            tr.setAttribute('class', tr.getAttribute('class') + ' last')
 
     def _generate_duration_rows(self):
         tr = None
