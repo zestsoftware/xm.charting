@@ -1,5 +1,10 @@
+import calendar
 from xml.dom import minidom
 from datetime import date
+from datetime import timedelta
+
+ONEWEEK = timedelta(days=7)
+ONEDAY = timedelta(days=1)
 
 
 def total_days(d1, d2):
@@ -14,7 +19,7 @@ def total_days(d1, d2):
 class GanttChartBuilder(object):
 
     now_factory = staticmethod(date.today)
-    max_width = 600
+    max_width = 700
 
     def __init__(self):
         self.duration_groups = []
@@ -50,6 +55,12 @@ class GanttChartBuilder(object):
                 if duration.enddate > latest:
                     latest = duration.enddate
 
+        while calendar.weekday(earliest.year, earliest.month,
+                               earliest.day) != 0:
+            earliest -= ONEDAY
+        while calendar.weekday(latest.year, latest.month, latest.day) != 6:
+            latest += ONEDAY
+
         days = total_days(earliest, latest)
         day_size = int(self.max_width / days) # how many pixels is one day?
 
@@ -59,6 +70,22 @@ class GanttChartBuilder(object):
         th.appendChild(div)
         div.setAttribute('style', 'width: %ipx' % self.max_width)
         div.setAttribute('class', 'timeline')
+
+        somedate = earliest
+        weekwidth = day_size * 7
+        totalwidth = 0
+        while somedate < latest:
+            weekdiv = doc.createElement('div')
+            div.appendChild(weekdiv)
+            weekdiv.setAttribute('class', 'week')
+            w = weekwidth
+            if totalwidth + w > self.max_width:
+                w = self.max_width - totalwidth
+            weekdiv.setAttribute('style',
+                                 'overflow: hidden; float: left; width: %ipx' % w)
+            weekdiv.appendChild(doc.createTextNode(str(somedate)))
+            somedate += ONEWEEK
+            totalwidth += w
 
         tbody = self.tbody = doc.createElement('tbody')
         table.appendChild(tbody)
