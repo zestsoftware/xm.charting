@@ -99,6 +99,7 @@ class HTMLGanttRenderer(object):
         somedate = earliest
         weekwidth = day_size * 7
         totalwidth = 0
+        weeks = {}
         while somedate < latest:
             weekdiv = doc.createElement('div')
             div.appendChild(weekdiv)
@@ -112,28 +113,85 @@ class HTMLGanttRenderer(object):
                                  'left: %ipx; width: %ipx'
                                  % (totalwidth, (w-5)))
             weekdiv.appendChild(doc.createTextNode(str(somedate)))
+            weeks[somedate] = {}
             somedate += ONEWEEK
             totalwidth += w
+
 
         self.tbody = tbody = self.tbody = doc.createElement('tbody')
         table.appendChild(tbody)
 
         self._generate_duration_rows()
-        self._generate_hours_rows()
+        self._generate_hours_rows(weeks)
 
         return table.toprettyxml('  ')
 
-    def _generate_hours_rows(self):
+    def _build_member_structure(self, weeks):
+        # the main part of complication here is that we need to
+        # setup a data structure where we can iterate over members
+        # first and then by weeks
+
+        # first off we need a complete list of all members that have any
+        # hours during the displayed weeks
+        members = {}
+        for dg in self.duration_groups:
+            for d in dg:
+                for w in d.work_hours:
+                    members[w] = {}
+
+        # next we need to assign a 0 value to each week for each member
+        for startdate in weeks:
+            for memberid, w in members.items():
+                w[startdate] = 0.0
+
+        # Now we finally go through the weeks and update the member's
+        # hours based on averaging.
+        # The way the averaging works is:
+        #   1. iterate over weeks
+        #     a) iterate over each duration (iteration) period
+        #       i) figure out the average hours spent by a member on that
+        #          iteration for one day
+        #       ii) figure out how many days of the iteration fall within
+        #           the date range we're looking at
+        #       iii) multiply days times avg and add it to the member's
+        #            total hours for that week across all iterations
+        for startdate, week in weeks.items():
+            enddate = startdate + timedelta(days=6)
+
+            for dg in self.duration_groups:
+                for d in dg:
+                    if d.enddate is not None and d.startdate is not None \
+                           and startdate < d.enddate and enddate > d.startdate:
+                        avg = {}
+                        durationdays = total_days(d.startdate, d.enddate)
+                        for memberid, work_hours in d.work_hours.items():
+                            avg[memberid] = float(work_hours) \
+                                            / float(durationdays)
+                        d1 = startdate
+                        if d.startdate > d1:
+                            d1 = d.startdate
+                        d2 = enddate
+                        if d.enddate < d2:
+                            d2 = d.enddate
+                        days = total_days(d2, d1)
+
+                        for memberid in d.work_hours:
+                            cur = week.get(memberid, 0.0)
+                            weektotal = cur + (days * avg[memberid])
+                            week[memberid] = weektotal
+                            members[memberid][startdate] = weektotal
+        return members
+
+    def _generate_hours_rows(self, weeks):
+        members = self._build_member_structure(weeks)
+
         tbody = self.tbody
         doc = self.doc
 
-        memberids = set()
-        for dg in self.duration_groups:
-            for d in dg:
-                memberids.update(d.work_hours.keys())
-
+        # now that we've built the complicated data structure, just
+        # iterate over everything and build up the HTML
         tr = None
-        for memberid in sorted(memberids):
+        for memberid in sorted(members):
             tr = doc.createElement('tr')
             tbody.appendChild(tr)
             tr.setAttribute('class', 'member')
@@ -148,12 +206,13 @@ class HTMLGanttRenderer(object):
 
             div = doc.createElement('div')
             td.appendChild(div)
-            div.setAttribute('style', 'height: 2em; width: %ipx; position: relative' % self.max_width)
+            div.setAttribute('style', 'height: 2em; width: %ipx; ' \
+                                      'position: relative' % self.max_width)
 
-            somedate = self.earliest
             weekwidth = self.day_size * 7
             totalwidth = 0
-            while somedate < self.latest:
+            for somedate in sorted(members[memberid]):
+                hours = members[memberid][somedate]
                 weekdiv = doc.createElement('div')
                 div.appendChild(weekdiv)
                 weekdiv.setAttribute('class', 'week')
@@ -165,8 +224,8 @@ class HTMLGanttRenderer(object):
                                      'position: absolute; ' + \
                                      'left: %ipx; width: %ipx'
                                      % (totalwidth, (w-5)))
-                weekdiv.appendChild(doc.createTextNode('0.0'))
-                somedate += ONEWEEK
+                s = '%.1f' % hours
+                weekdiv.appendChild(doc.createTextNode(s))
                 totalwidth += w
 
         if tr is not None:
