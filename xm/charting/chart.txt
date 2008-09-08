@@ -24,4 +24,4 @@ Before any testing can start we need to setup some example data.
 Now for building the chart.
 
     >>> from xm.charting import gantt
-    >>> print gantt.generate_chart([p1, p2])
+    >>> #print gantt.generate_chart([p1, p2])
