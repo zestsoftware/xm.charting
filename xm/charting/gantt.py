@@ -10,6 +10,22 @@ TWOMONTHS = timedelta(days=ONEMONTH.days*2)
 THREEMONTHS = timedelta(days=ONEMONTH.days*3)
 
 
+def make_id(text):
+    s = ''
+    for x in text:
+        if x.isalpha():
+            s += x.lower()
+        elif x.isdigit():
+            s += x
+        elif not s.endswith('-'):
+            s += '-'
+
+    if s.endswith('-'):
+        s = s[:-1]
+
+    return s
+
+
 def total_days(d1, d2):
     if d1 > d2:
         d = d1 - d2
@@ -281,10 +297,18 @@ class HTMLGanttRenderer(object):
 
                 bar = doc.createElement('div')
                 durdiv.appendChild(bar)
-                bar.appendChild(doc.createTextNode(duration.name))
+                n = doc.createTextNode(duration.name)
+                if duration.url:
+                    link = doc.createElement('a')
+                    link.appendChild(n)
+                    link.setAttribute('href', duration.url)
+                    n = link
+                bar.appendChild(n)
                 c = 'bar'
                 if duration.enddate is None or duration.startdate is None:
                     c += ' invalid-date'
+                if duration.state:
+                    c += ' ' + make_id(duration.state)
                 bar.setAttribute('class', c)
                 days = total_days(start, end)
                 pixels = int(days * day_size)

@@ -19,8 +19,10 @@ class DurationGroup(object):
 class Duration(object):
     interface.implements(interfaces.IDuration)
 
-    def __init__(self, name, start, end):
+    def __init__(self, name, start, end, state=None, url=None):
         self.name = name
         self.startdate = start
         self.enddate = end
         self.work_hours = {}
+        self.state = state
+        self.url = url

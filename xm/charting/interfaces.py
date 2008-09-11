@@ -17,3 +17,5 @@ class IDuration(interface.Interface):
     startdate = schema.Date(title=u'Start Date')
     enddate = schema.Date(title=u'End Date')
     work_hours = schema.Dict(title=u'Dictionary of items with hours')
+    state = schema.TextLine(title=u'State of this duration')
+    url = schema.TextLine(title=u'URL')
