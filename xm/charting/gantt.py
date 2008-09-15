@@ -261,7 +261,13 @@ class HTMLGanttRenderer(object):
 
             td = doc.createElement('td')
             tr.appendChild(td)
-            td.appendChild(doc.createTextNode(duration_group.name))
+            n = doc.createTextNode(duration_group.name)
+            if duration_group.url:
+                link = doc.createElement('a')
+                link.setAttribute('href', duration_group.url)
+                link.appendChild(n)
+                n = link
+            td.appendChild(n)
             td.setAttribute('class', 'left-col')
 
             td = doc.createElement('td')

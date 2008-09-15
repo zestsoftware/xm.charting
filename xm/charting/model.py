@@ -5,8 +5,9 @@ from zope import interface
 class DurationGroup(object):
     interface.implements(interfaces.IDurationGroup)
 
-    def __init__(self, name):
+    def __init__(self, name, url=None):
         self.name = name
+        self.url = url
         self._iterations = []
 
     def __iter__(self):

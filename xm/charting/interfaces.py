@@ -4,9 +4,10 @@ from zope import schema
 
 class IDurationGroup(interface.Interface):
     name = schema.TextLine(title=u'Name')
+    url = schema.TextLine(title=u'URL')
 
     def __iter__():
-        """Return iterations."""
+        """Return durations iterator."""
 
     def __len__():
         """Return number of durations"""
