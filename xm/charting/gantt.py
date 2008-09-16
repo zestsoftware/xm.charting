@@ -279,61 +279,91 @@ class HTMLGanttRenderer(object):
             div.setAttribute('style', 'width: %ipx' % self.max_width)
             div.setAttribute('class', 'duration-group')
 
+            rows = []
             for duration in duration_group:
+                end = duration.enddate
+                start = duration.startdate
+                if end is not None and start is not None:
+                    if ((start > latest and end > latest)
+                        or (start < earliest and end < earliest)):
+                        continue
+                end = end or latest
+                start = start or earliest
+
+                found = None
+                for row in rows:
+                    if len(row) == 0:
+                        continue
+
+                    lastend = row[-1].enddate or latest
+
+                    if start >= lastend:
+                        found = row
+                        break
+
+                if found is None:
+                    found = []
+                    rows.append(found)
+
+                found.append(duration)
+
+            for row in rows:
                 durdiv = doc.createElement('div')
                 div.appendChild(durdiv)
                 durdiv.setAttribute('class', 'duration')
 
-                start = duration.startdate
-                if start is None or start < earliest:
-                    start = earliest
-                end = duration.enddate
-                if end is None or end > latest:
-                    end = latest
+                curearliest = earliest
+                curlatest = latest
+                for duration in row:
+                    start = duration.startdate
+                    if start is None or start < curearliest:
+                        start = curearliest
+                    end = duration.enddate
+                    if end is None or end > curlatest:
+                        end = curlatest
 
-                if end < start:
-                    start = earliest
-                    end = latest
+                    if end < start:
+                        start = curearliest
+                        end = curlatest
 
-                days = total_days(earliest, start)
-                pixels = int(days * day_size)
-                if days > 0:
-                    leading = doc.createElement('div')
-                    durdiv.appendChild(leading)
-                    leading.appendChild(doc.createTextNode('leading'))
-                    leading.setAttribute('class', 'leading')
-                    leading.setAttribute('style',
-                                         'float: left; width: %ipx' % pixels)
+                    days = total_days(curearliest, start)
+                    pixels = int(days * day_size)
+                    if days > 0:
+                        leading = doc.createElement('div')
+                        durdiv.appendChild(leading)
+                        leading.appendChild(doc.createTextNode('space'))
+                        leading.setAttribute('class', 'space')
+                        s = 'float: left; width: %ipx' % pixels
+                        leading.setAttribute('style', s)
 
-                bar = doc.createElement('div')
-                durdiv.appendChild(bar)
-                n = doc.createTextNode(duration.name)
-                if duration.url:
-                    link = doc.createElement('a')
-                    link.appendChild(n)
-                    link.setAttribute('href', duration.url)
-                    n = link
-                bar.appendChild(n)
-                c = 'bar'
-                if duration.enddate is None or duration.startdate is None or \
-                       duration.enddate < duration.startdate:
-                    c += ' invalid-date'
-                if duration.state:
-                    c += ' ' + make_id(duration.state)
-                bar.setAttribute('class', c)
-                days = total_days(start, end)
-                pixels = int(days * day_size)
-                bar.setAttribute('style', 'float: left; width: %ipx' % pixels)
-
-                days = total_days(latest, end)
-                pixels = int(days * day_size)
-                if days > 0:
-                    following = doc.createElement('div')
-                    durdiv.appendChild(following)
-                    following.appendChild(doc.createTextNode('following'))
-                    following.setAttribute('class', 'following')
-                    following.setAttribute('style',
-                                           'float: left; width: %ipx' % pixels)
+                    bar = doc.createElement('div')
+                    durdiv.appendChild(bar)
+                    n = doc.createTextNode(duration.name)
+                    if duration.url:
+                        link = doc.createElement('a')
+                        link.appendChild(n)
+                        link.setAttribute('href', duration.url)
+                        linktitle = ''
+                        if duration.startdate:
+                            linktitle = str(duration.startdate) + ' - '
+                        if duration.enddate:
+                            linktitle += str(duration.enddate)
+                        if linktitle.endswith(' - '):
+                            linktitle = linktitle[:-3]
+                        link.setAttribute('title', linktitle)
+                        n = link
+                    bar.appendChild(n)
+                    c = 'bar'
+                    if duration.enddate is None or duration.startdate is None or \
+                           duration.enddate < duration.startdate:
+                        c += ' invalid-date'
+                    if duration.state:
+                        c += ' ' + make_id(duration.state)
+                    bar.setAttribute('class', c)
+                    days = total_days(start, end)
+                    pixels = int(days * day_size)
+                    bar.setAttribute('style', 'float: left; width: %ipx' % pixels)
+                    curearliest = end
 
                 br = doc.createElement('br')
                 durdiv.appendChild(br)
