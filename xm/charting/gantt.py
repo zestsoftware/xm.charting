@@ -326,6 +326,9 @@ class HTMLGanttRenderer(object):
                         start = curearliest
                         end = curlatest
 
+                    # always include the actual day we end on
+                    end += ONEDAY
+
                     days = total_days(curearliest, start)
                     pixels = int(days * day_size)
                     if days > 0:
@@ -354,8 +357,9 @@ class HTMLGanttRenderer(object):
                         n = link
                     bar.appendChild(n)
                     c = 'bar'
-                    if duration.enddate is None or duration.startdate is None or \
-                           duration.enddate < duration.startdate:
+                    if (duration.enddate is None
+                        or duration.startdate is None
+                        or duration.enddate < duration.startdate):
                         c += ' invalid-date'
                     if duration.state:
                         c += ' ' + make_id(duration.state)
