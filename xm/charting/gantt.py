@@ -38,7 +38,7 @@ def total_days(d1, d2):
 class HTMLGanttRenderer(object):
 
     now_factory = staticmethod(date.today)
-    max_width = 700
+    max_width = 600
 
     def __init__(self, duration_groups):
         self.duration_groups = duration_groups
