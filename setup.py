@@ -27,6 +27,7 @@ setup(name='xm.charting',
       ],
       test_suite='xm.charting.tests.test_suite',
       entry_points="""
-      # -*- Entry points: -*-
+      [z3c.autoinclude.plugin]
+      target = plone
       """,
       )
