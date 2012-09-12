@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.5 (unreleased)
+0.5 (2012-09-12)
 ----------------
 
 - Moved to github: https://github.com/zestsoftware/xm.charting
