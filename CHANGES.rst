@@ -4,7 +4,8 @@ Changelog
 0.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Moved to github: https://github.com/zestsoftware/xm.charting
+  [maurits]
 
 
 0.4 (2010-09-24)
@@ -30,4 +31,3 @@ Changelog
 ----------------
 
 * Initial release
-
