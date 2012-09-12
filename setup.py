@@ -1,17 +1,16 @@
 from setuptools import setup, find_packages
-import os
 
 version = '0.5dev'
 
 setup(name='xm.charting',
       version=version,
       description="For generating gantt charts",
-      long_description=open("README.txt").read() + "\n" +
-                       open(os.path.join("docs", "HISTORY.txt")).read(),
+      long_description=(open("README.txt").read() + "\n" +
+                        open("CHANGES.rst").read()),
       classifiers=[
-        "Programming Language :: Python",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        ],
+          "Programming Language :: Python",
+          "Topic :: Software Development :: Libraries :: Python Modules",
+          ],
       keywords='',
       author='Rocky Burt',
       author_email='rocky@serverzen.com',
